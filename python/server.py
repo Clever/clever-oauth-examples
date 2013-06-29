@@ -36,7 +36,11 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         }), {
             'Authorization': base64.b64encode(client_secret + ':') # use client_secret as basic auth password
         })
-        resp = json.load(urllib2.urlopen(req))
+        try:
+            resp = json.load(urllib2.urlopen(req))
+        except urllib2.HTTPError as e:
+            self.wfile.write('error:\n' + e.read())
+            return
 
         access_token = resp['access_token']
         self.wfile.write('Access token is {}\n'.format(access_token))
