@@ -2,6 +2,7 @@
 # vim: set ts=4 sw=4 expandtab:
 
 import BaseHTTPServer
+import SocketServer
 import base64
 import json
 import os.path
@@ -19,7 +20,13 @@ CLEVER_API_BASE = 'https://api.getclever.com'
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):
         query = urlparse.urlparse(self.path).query
-        params = urlparse.parse_qs(query, strict_parsing=True)
+        try:
+          params = urlparse.parse_qs(query, strict_parsing=True)
+        except ValueError:
+          self.send_response(400)
+          self.end_headers()
+          print 'failed to parse', self.path
+          return
         for k, v in params.iteritems():
             params[k] = v[0]
         self.send_response(200)
@@ -56,6 +63,9 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write("Here's some information about the user:\n");
         self.wfile.write(resp);
 
+class ThreadedHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
+    pass
+
 try:
     port = 8000
     keyfile = 'ssl.key'
@@ -63,9 +73,10 @@ try:
     if not os.path.exists(keyfile) or not os.path.exists(certfile):
         print 'need both', keyfile, certfile
         sys.exit()
-    server = BaseHTTPServer.HTTPServer(('localhost', port), RequestHandler)
+    server = ThreadedHTTPServer(('0.0.0.0', port), RequestHandler)
     server.socket = ssl.wrap_socket(server.socket, certfile=certfile, keyfile=keyfile, server_side=True)
     print 'listening on :{}'.format(port)
+    server.timeout = 5
     server.serve_forever()
 except KeyboardInterrupt:
     server.socket.close()
