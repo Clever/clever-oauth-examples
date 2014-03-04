@@ -1,7 +1,7 @@
 <?php
 error_reporting(-1);
 
-// From: https://account.getclever.com/partner/applications
+// From: https://account.clever.com/partner/applications
 $client_secret = $_ENV["CLEVER_CLIENT_SECRET"];
 $client_redirect = $_ENV["CLEVER_CLIENT_REDIRECT"]; // e.g. https://myawesomeapp.com/clever/oauth.php
 

@@ -15,7 +15,7 @@ import urlparse
 client_secret = 'x'
 redirect = 'https://localhost:8000/oauth'
 
-CLEVER_API_BASE = 'https://api.getclever.com'
+CLEVER_API_BASE = 'https://api.clever.com'
 
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_GET(self):

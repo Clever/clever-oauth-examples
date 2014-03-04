@@ -1,7 +1,7 @@
 Clever OAuth Examples
 =====================
 
-Code samples to support your development against [Clever's](https://getclever.com) OAuth implementation.
+Code samples to support your development against [Clever's](https://clever.com) OAuth implementation.
 Issues & pull requests appreciated!
 
 
@@ -16,6 +16,6 @@ Example Implementations
 See also
 --------
 
-* [OAuth Overview](https://getclever.com/developers/docs/oauth)
-* [OAuth API Reference](https://getclever.com/developers/docs/oauth/reference) 
-* [Single Sign On Overview](https://getclever.com/developers/docs/oauth/sso) 
+* [OAuth Overview](https://clever.com/developers/docs/explorer#resource_sections)
+* [OAuth API Reference](https://clever.com/developers/docs/explorer#resource_sections)
+* [Single Sign On Overview](https://clever.com/developers/docs/#identity-api-sso-clever-sso)
