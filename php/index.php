@@ -2,6 +2,7 @@
 error_reporting(-1);
 
 // From: https://account.clever.com/partner/applications
+$client_id = $_ENV["CLEVER_CLIENT_ID"];
 $client_secret = $_ENV["CLEVER_CLIENT_SECRET"];
 $client_redirect = $_ENV["CLEVER_CLIENT_REDIRECT"]; // e.g. https://myawesomeapp.com/clever/oauth.php
 
@@ -17,7 +18,7 @@ $data = array('code'         => $code,
                 'redirect_uri' => $client_redirect);
 
 // use client_secret as basic auth password
-curl_setopt($ch, CURLOPT_USERPWD, $client_secret . ':');
+curl_setopt($ch, CURLOPT_USERPWD, $client_id . ':' . $client_secret);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
