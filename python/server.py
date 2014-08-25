@@ -12,7 +12,9 @@ import urllib
 import urllib2
 import urlparse
 
-client_secret = 'x'
+client_id = 'x'
+client_secret = 'y'
+
 redirect = 'https://localhost:8000/oauth'
 
 CLEVER_API_BASE = 'https://api.clever.com'
@@ -41,7 +43,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             'grant_type': 'authorization_code',
             'redirect_uri': redirect,
         }), {
-            'Authorization': base64.b64encode(client_secret + ':') # use client_secret as basic auth password
+            'Authorization': base64.b64encode(client_id + ':' + client_secret) # use basic auth
         })
         try:
             resp = json.load(urllib2.urlopen(req))
