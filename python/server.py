@@ -36,7 +36,7 @@ def index():
 
 
 @route('/oauth')
-def index():
+def oauth():
     code = request.query.code
     scope = request.query.scope
 
