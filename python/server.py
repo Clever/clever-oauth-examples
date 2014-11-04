@@ -22,11 +22,11 @@ def index():
         'redirect_uri': REDIRECT_URI,
         'client_id': CLIENT_ID,
         'scope': 'read:user_id read:sis',
-        'district_id': DISTRICT_ID        
+        'district_id': DISTRICT_ID
     })
     return template("<h1>Sign In!<br/><br/> \
         <a href='https://clever.com/oauth/authorize?" + encoded_string +
-        "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a></h1>"    
+        "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a></h1>"
     )
 
 
@@ -35,7 +35,7 @@ def index():
     code = request.query.code
     scope = request.query.scope
 
-    payload = { 
+    payload = {
     'code': code,
         'grant_type': 'authorization_code',
         'redirect_uri': REDIRECT_URI
@@ -45,7 +45,7 @@ def index():
     	'Authorization': 'Basic ' + base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET),
         'Content-Type': 'application/json'
     }
-    
+
     resp = requests.post(CLEVER_OAUTH_URL, data=json.dumps(payload), headers=headers).json()
     token = resp['access_token']
 
