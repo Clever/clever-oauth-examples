@@ -63,4 +63,6 @@ def index():
     nameObject = result['data']['name']
     return template("You are now logged in as {{name}}", name=nameObject['first'] + ' ' + nameObject['last'])
 
-run(host='localhost', port=PORT)
+if __name__ == '__main__':
+    run(host='localhost', port=PORT)
+
