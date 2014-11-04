@@ -42,7 +42,7 @@ def index():
     }
 
     headers = {
-    'Authorization': 'Basic ' + base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET),
+    	'Authorization': 'Basic ' + base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET),
         'Content-Type': 'application/json'
     }
     
