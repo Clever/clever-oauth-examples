@@ -9,7 +9,12 @@ import urllib
 CLIENT_ID = os.environ['CLIENT_ID']
 CLIENT_SECRET = os.environ['CLIENT_SECRET']
 
-REDIRECT_URI = 'http://localhost:8080/oauth'
+if 'PORT' in os.environ:
+    PORT = os.environ['PORT']
+else:
+    PORT = 2587
+
+REDIRECT_URI = 'http://localhost:{port}/oauth'.format(port=PORT)
 CLEVER_OAUTH_URL = 'https://clever.com/oauth/tokens'
 CLEVER_API_BASE = 'https://api.clever.com'
 
@@ -58,4 +63,4 @@ def index():
     nameObject = result['data']['name']
     return template("You are now logged in as {{name}}", name=nameObject['first'] + ' ' + nameObject['last'])
 
-run(host='localhost', port=8080)
+run(host='localhost', port=PORT)
