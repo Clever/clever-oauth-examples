@@ -2,17 +2,18 @@ from bottle import route, run, request, template
 
 import base64
 import json
+import os
 import requests
 import urllib
 
-CLIENT_ID = 'CLIENT ID GOES HERE'
-CLIENT_SECRET = 'CLIENT SECRET GOES HERE'
+CLIENT_ID = os.environ['CLIENT_ID']
+CLIENT_SECRET = os.environ['CLIENT_SECRET']
 
 REDIRECT_URI = 'http://localhost:8080/oauth'
 CLEVER_OAUTH_URL = 'https://clever.com/oauth/tokens'
 CLEVER_API_BASE = 'https://api.clever.com'
 
-DISTRICT_ID = 'DISTRICT ID GOES HERE'
+DISTRICT_ID = os.environ['DISTRICT_ID']
 
 @route('/')
 def index():
