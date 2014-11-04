@@ -1,82 +1,60 @@
-#!/usr/bin/env python
-# vim: set ts=4 sw=4 expandtab:
+from bottle import route, run, request, template
 
-import BaseHTTPServer
-import SocketServer
 import base64
 import json
-import os.path
-import ssl
-import sys
+import requests
 import urllib
-import urllib2
-import urlparse
 
-client_secret = 'x'
-redirect = 'https://localhost:8000/oauth'
+CLIENT_ID = 'CLIENT ID GOES HERE'
+CLIENT_SECRET = 'CLIENT SECRET GOES HERE'
 
+REDIRECT_URI = 'http://localhost:8080/oauth'
+CLEVER_OAUTH_URL = 'https://clever.com/oauth/tokens'
 CLEVER_API_BASE = 'https://api.clever.com'
 
-class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-    def do_GET(self):
-        query = urlparse.urlparse(self.path).query
-        try:
-          params = urlparse.parse_qs(query, strict_parsing=True)
-        except ValueError:
-          self.send_response(400)
-          self.end_headers()
-          print 'failed to parse', self.path
-          return
-        for k, v in params.iteritems():
-            params[k] = v[0]
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/plain')
-        self.end_headers()
+DISTRICT_ID = 'DISTRICT ID GOES HERE'
 
-        code = params['code']
-        self.wfile.write('Code is {}\n'.format(code))
-        self.wfile.write('Redeeming code for token.\n')
-        req = urllib2.Request(CLEVER_API_BASE + '/oauth/token', urllib.urlencode({
-            'code': code,
-            'grant_type': 'authorization_code',
-            'redirect_uri': redirect,
-        }), {
-            'Authorization': base64.b64encode(client_secret + ':') # use client_secret as basic auth password
-        })
-        try:
-            resp = json.load(urllib2.urlopen(req))
-        except urllib2.HTTPError as e:
-            self.wfile.write('error:\n' + e.read())
-            return
+@route('/')
+def index():
+    encoded_string = urllib.urlencode({
+        'response_type': 'code',
+        'redirect_uri': REDIRECT_URI,
+        'client_id': CLIENT_ID,
+        'scope': 'read:user_id read:sis',
+        'district_id': DISTRICT_ID        
+    })
+    return template("<h1>Sign In!<br/><br/> \
+        <a href='https://clever.com/oauth/authorize?" + encoded_string +
+        "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a></h1>"    
+    )
 
-        access_token = resp['access_token']
-        self.wfile.write('Access token is {}\n'.format(access_token))
-        self.wfile.write('Using token to look up user information.\n')
-        req = urllib2.Request(CLEVER_API_BASE + '/me', headers={
-            'Authorization': 'Bearer ' + access_token
-        })
-        try:
-            resp = urllib2.urlopen(req).read()
-        except urllib2.HTTPError as e:
-            self.wfile.write('error:\n' + e.read())
-            return
-        self.wfile.write("Here's some information about the user:\n");
-        self.wfile.write(resp);
 
-class ThreadedHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
-    pass
+@route('/oauth')
+def index():
+    code = request.query.code
+    scope = request.query.scope
 
-try:
-    port = 8000
-    keyfile = 'ssl.key'
-    certfile = 'ssl.crt'
-    if not os.path.exists(keyfile) or not os.path.exists(certfile):
-        print 'need both', keyfile, certfile
-        sys.exit()
-    server = ThreadedHTTPServer(('0.0.0.0', port), RequestHandler)
-    server.socket = ssl.wrap_socket(server.socket, certfile=certfile, keyfile=keyfile, server_side=True)
-    print 'listening on :{}'.format(port)
-    server.timeout = 5
-    server.serve_forever()
-except KeyboardInterrupt:
-    server.socket.close()
+    payload = { 
+    'code': code,
+        'grant_type': 'authorization_code',
+        'redirect_uri': REDIRECT_URI
+    }
+
+    headers = {
+    'Authorization': 'Basic ' + base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET),
+        'Content-Type': 'application/json'
+    }
+    
+    resp = requests.post(CLEVER_OAUTH_URL, data=json.dumps(payload), headers=headers).json()
+    token = resp['access_token']
+
+    bearer_headers = {
+        'Authorization': 'Bearer ' + token
+    }
+
+    result = requests.get(CLEVER_API_BASE + '/me', headers=bearer_headers).json()
+
+    nameObject = result['data']['name']
+    return template("You are now logged in as {{name}}", name=nameObject['first'] + ' ' + nameObject['last'])
+
+run(host='localhost', port=8080)
