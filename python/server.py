@@ -59,17 +59,15 @@ def oauth():
         'Content-Type': 'application/json'
     }
 
-    resp = requests.post(CLEVER_OAUTH_URL, data=json.dumps(payload), headers=headers).json()
+    response = requests.post(CLEVER_OAUTH_URL, data=json.dumps(payload), headers=headers).json()
 
-    token = resp['access_token']
+    token = response['access_token']
 
     bearer_headers = {
         'Authorization': 'Bearer {token}'.format(token=token)
     }
 
     result = requests.get(CLEVER_API_BASE + '/me', headers=bearer_headers).json()
-
-    print json.dumps(result, sort_keys=True, indent=4, separators=(',', ': '))
 
     nameObject = result['data']['name']
     session = request.environ.get('beaker.session')
