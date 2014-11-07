@@ -64,6 +64,7 @@ def oauth():
         'Content-Type': 'application/json'
     }
 
+    # Don't forget to handle 4xx and 5xx errors!
     response = requests.post(CLEVER_OAUTH_URL, data=json.dumps(payload), headers=headers).json()
     token = response['access_token']
 
@@ -71,6 +72,7 @@ def oauth():
         'Authorization': 'Bearer {token}'.format(token=token)
     }
 
+    # Don't forget to handle 4xx and 5xx errors!
     result = requests.get(CLEVER_API_BASE + '/me', headers=bearer_headers).json()
 
     nameObject = result['data']['name']
