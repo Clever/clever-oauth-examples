@@ -46,7 +46,6 @@ def index():
 @route('/oauth')
 def oauth():
     code = request.query.code
-    scope = request.query.scope
 
     payload = {
         'code': code,
