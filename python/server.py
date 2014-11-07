@@ -1,3 +1,6 @@
+# A sample Clever Instant Login implementation.
+# Uses the Bottle framework and raw HTTP requests to demonstrate the OAuth2 flow.
+
 import base64
 import json
 import os
@@ -29,6 +32,7 @@ session_opts = {
 }
 myapp = SessionMiddleware(app(), session_opts)
 
+# A home page
 @route('/')
 def index():
     encoded_string = urllib.urlencode({
@@ -43,6 +47,7 @@ def index():
         "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a></h1>"
     )
 
+# The OAuth implementation
 @route('/oauth')
 def oauth():
     code = request.query.code
@@ -54,7 +59,8 @@ def oauth():
     }
 
     headers = {
-    	'Authorization': 'Basic {base64string}'.format(base64string = base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET)),
+    	'Authorization': 'Basic {base64string}'.format(base64string =
+            base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET)),
         'Content-Type': 'application/json'
     }
 
@@ -74,6 +80,7 @@ def oauth():
     redirect('/app')
 
 
+# A route behind a session
 @route('/app')
 def app():
     session = request.environ.get('beaker.session')
