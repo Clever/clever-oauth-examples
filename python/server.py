@@ -59,7 +59,6 @@ def oauth():
     }
 
     response = requests.post(CLEVER_OAUTH_URL, data=json.dumps(payload), headers=headers).json()
-
     token = response['access_token']
 
     bearer_headers = {
