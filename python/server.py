@@ -81,7 +81,6 @@ def oauth():
 
     redirect('/app')
 
-
 # A route behind a session
 @route('/app')
 def app():
@@ -91,7 +90,6 @@ def app():
         return template("You are now logged in as {{name}}", name=nameObject['first'] + ' ' + nameObject['last'])
     else:
         return "You must be logged in to see this page! Click <a href='/'>here</a> to log in."
-
 
 if __name__ == '__main__':
     run(app=myapp, host='localhost', port=PORT)
