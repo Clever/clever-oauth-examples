@@ -10,6 +10,7 @@ import urllib
 from bottle import app, redirect, request, route, run, template
 from beaker.middleware import SessionMiddleware
 
+# Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
 CLIENT_ID = os.environ['CLIENT_ID']
 CLIENT_SECRET = os.environ['CLIENT_SECRET']
 
@@ -18,10 +19,14 @@ if 'PORT' in os.environ:
 else:
     PORT = 2587
 
+# Clever redirect URIs must be preregistered on your developer dashboard.
+# If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
 REDIRECT_URI = 'http://localhost:{port}/oauth'.format(port=PORT)
 CLEVER_OAUTH_URL = 'https://clever.com/oauth/tokens'
 CLEVER_API_BASE = 'https://api.clever.com'
 
+# A District ID is required to generate Clever Instant Login URLs.
+# One method to obtain a District ID associated with your application is from https://account.clever.com/partner
 DISTRICT_ID = os.environ['DISTRICT_ID']
 
 # Use the bottle session middleware to store an object to represent a "logged in" state.
@@ -32,7 +37,7 @@ session_opts = {
 }
 myapp = SessionMiddleware(app(), session_opts)
 
-# A home page
+# Our home page route will create a Clever Instant Login button for users from the district our DISTRICT_ID is set to.
 @route('/')
 def index():
     encoded_string = urllib.urlencode({
@@ -47,7 +52,10 @@ def index():
         "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a></h1>"
     )
 
-# The OAuth implementation
+# Our OAuth 2.0 redirect URI location corresponds to what we've set above as our REDIRECT_URI
+# When this route is executed, we will retrieve the "code" parameter and exchange it for a Clever access token.
+# After receiving the access token, we use it with api.clever.com/me to determine its owner,
+# save our session state, and redirect our user to our application.
 @route('/oauth')
 def oauth():
     code = request.query.code
@@ -81,7 +89,7 @@ def oauth():
 
     redirect('/app')
 
-# A route behind a session
+# Our application logic lives here and is reserved only for users we've authenticated and identified.
 @route('/app')
 def app():
     session = request.environ.get('beaker.session')
@@ -93,4 +101,3 @@ def app():
 
 if __name__ == '__main__':
     run(app=myapp, host='localhost', port=PORT)
-
