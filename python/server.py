@@ -82,12 +82,26 @@ def oauth():
 
     # Don't forget to handle 4xx and 5xx errors!
     result = requests.get(CLEVER_API_BASE + '/me', headers=bearer_headers).json()
+    data = result['data']
 
-    nameObject = result['data']['name']
-    session = request.environ.get('beaker.session')
-    session['nameObject'] = nameObject
+    # Only handle student logins for our app (other types include teachers and districts)
+    if data['type'] != 'student':
+        return template ("You must be a student to log in to this app but you are a {{type}}.", type=data['type'])
+    else:
+        if 'name' in data: #SIS scope
+            nameObject = data['name']            
+        else:
+            #For student scopes, we'll have to take an extra step to get name data.
+            studentId = data['id']
+            student = requests.get(CLEVER_API_BASE + '/v1.1/students/{studentId}'.format(studentId=studentId), 
+                headers=bearer_headers).json()
 
-    redirect('/app')
+            nameObject = student['data']['name']
+        
+        session = request.environ.get('beaker.session')
+        session['nameObject'] = nameObject
+
+        redirect('/app')
 
 # Our application logic lives here and is reserved only for users we've authenticated and identified.
 @route('/app')
