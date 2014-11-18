@@ -1,82 +1,117 @@
-#!/usr/bin/env python
-# vim: set ts=4 sw=4 expandtab:
+# A sample Clever Instant Login implementation.
+# Uses the Bottle framework and raw HTTP requests to demonstrate the OAuth2 flow.
 
-import BaseHTTPServer
-import SocketServer
 import base64
 import json
-import os.path
-import ssl
-import sys
+import os
+import requests
 import urllib
-import urllib2
-import urlparse
 
-client_secret = 'x'
-redirect = 'https://localhost:8000/oauth'
+from bottle import app, redirect, request, route, run, template
+from beaker.middleware import SessionMiddleware
 
+# Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
+CLIENT_ID = os.environ['CLIENT_ID']
+CLIENT_SECRET = os.environ['CLIENT_SECRET']
+
+if 'PORT' in os.environ:
+    PORT = os.environ['PORT']
+else:
+    PORT = 2587
+
+# Clever redirect URIs must be preregistered on your developer dashboard.
+# If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
+REDIRECT_URI = 'http://localhost:{port}/oauth'.format(port=PORT)
+CLEVER_OAUTH_URL = 'https://clever.com/oauth/tokens'
 CLEVER_API_BASE = 'https://api.clever.com'
 
-class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-    def do_GET(self):
-        query = urlparse.urlparse(self.path).query
-        try:
-          params = urlparse.parse_qs(query, strict_parsing=True)
-        except ValueError:
-          self.send_response(400)
-          self.end_headers()
-          print 'failed to parse', self.path
-          return
-        for k, v in params.iteritems():
-            params[k] = v[0]
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/plain')
-        self.end_headers()
+# A District ID is required to generate Clever Instant Login URLs.
+# One method to obtain a District ID associated with your application is from https://account.clever.com/partner
+DISTRICT_ID = os.environ['DISTRICT_ID']
 
-        code = params['code']
-        self.wfile.write('Code is {}\n'.format(code))
-        self.wfile.write('Redeeming code for token.\n')
-        req = urllib2.Request(CLEVER_API_BASE + '/oauth/token', urllib.urlencode({
-            'code': code,
-            'grant_type': 'authorization_code',
-            'redirect_uri': redirect,
-        }), {
-            'Authorization': base64.b64encode(client_secret + ':') # use client_secret as basic auth password
-        })
-        try:
-            resp = json.load(urllib2.urlopen(req))
-        except urllib2.HTTPError as e:
-            self.wfile.write('error:\n' + e.read())
-            return
+# Use the bottle session middleware to store an object to represent a "logged in" state.
+session_opts = {
+    'session.type': 'memory',
+    'session.cookie_expires': 300,
+    'session.auto': True
+}
+myapp = SessionMiddleware(app(), session_opts)
 
-        access_token = resp['access_token']
-        self.wfile.write('Access token is {}\n'.format(access_token))
-        self.wfile.write('Using token to look up user information.\n')
-        req = urllib2.Request(CLEVER_API_BASE + '/me', headers={
-            'Authorization': 'Bearer ' + access_token
-        })
-        try:
-            resp = urllib2.urlopen(req).read()
-        except urllib2.HTTPError as e:
-            self.wfile.write('error:\n' + e.read())
-            return
-        self.wfile.write("Here's some information about the user:\n");
-        self.wfile.write(resp);
+# Our home page route will create a Clever Instant Login button for users from the district our DISTRICT_ID is set to.
+@route('/')
+def index():
+    encoded_string = urllib.urlencode({
+        'response_type': 'code',
+        'redirect_uri': REDIRECT_URI,
+        'client_id': CLIENT_ID,
+        'scope': 'read:user_id read:sis',
+        'district_id': DISTRICT_ID
+    })
+    return template("<h1>Login!<br/><br/> \
+        <a href='https://clever.com/oauth/authorize?" + encoded_string +
+        "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a></h1>"
+    )
 
-class ThreadedHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
-    pass
+# Our OAuth 2.0 redirect URI location corresponds to what we've set above as our REDIRECT_URI
+# When this route is executed, we will retrieve the "code" parameter and exchange it for a Clever access token.
+# After receiving the access token, we use it with api.clever.com/me to determine its owner,
+# save our session state, and redirect our user to our application.
+@route('/oauth')
+def oauth():
+    code = request.query.code
 
-try:
-    port = 8000
-    keyfile = 'ssl.key'
-    certfile = 'ssl.crt'
-    if not os.path.exists(keyfile) or not os.path.exists(certfile):
-        print 'need both', keyfile, certfile
-        sys.exit()
-    server = ThreadedHTTPServer(('0.0.0.0', port), RequestHandler)
-    server.socket = ssl.wrap_socket(server.socket, certfile=certfile, keyfile=keyfile, server_side=True)
-    print 'listening on :{}'.format(port)
-    server.timeout = 5
-    server.serve_forever()
-except KeyboardInterrupt:
-    server.socket.close()
+    payload = {
+        'code': code,
+        'grant_type': 'authorization_code',
+        'redirect_uri': REDIRECT_URI
+    }
+
+    headers = {
+    	'Authorization': 'Basic {base64string}'.format(base64string =
+            base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET)),
+        'Content-Type': 'application/json'
+    }
+
+    # Don't forget to handle 4xx and 5xx errors!
+    response = requests.post(CLEVER_OAUTH_URL, data=json.dumps(payload), headers=headers).json()
+    token = response['access_token']
+
+    bearer_headers = {
+        'Authorization': 'Bearer {token}'.format(token=token)
+    }
+
+    # Don't forget to handle 4xx and 5xx errors!
+    result = requests.get(CLEVER_API_BASE + '/me', headers=bearer_headers).json()
+    data = result['data']
+
+    # Only handle student logins for our app (other types include teachers and districts)
+    if data['type'] != 'student':
+        return template ("You must be a student to log in to this app but you are a {{type}}.", type=data['type'])
+    else:
+        if 'name' in data: #SIS scope
+            nameObject = data['name']            
+        else:
+            #For student scopes, we'll have to take an extra step to get name data.
+            studentId = data['id']
+            student = requests.get(CLEVER_API_BASE + '/v1.1/students/{studentId}'.format(studentId=studentId), 
+                headers=bearer_headers).json()
+
+            nameObject = student['data']['name']
+        
+        session = request.environ.get('beaker.session')
+        session['nameObject'] = nameObject
+
+        redirect('/app')
+
+# Our application logic lives here and is reserved only for users we've authenticated and identified.
+@route('/app')
+def app():
+    session = request.environ.get('beaker.session')
+    if 'nameObject' in session:
+        nameObject = session['nameObject']
+        return template("You are now logged in as {{name}}", name=nameObject['first'] + ' ' + nameObject['last'])
+    else:
+        return "You must be logged in to see this page! Click <a href='/'>here</a> to log in."
+
+if __name__ == '__main__':
+    run(app=myapp, host='localhost', port=PORT)
