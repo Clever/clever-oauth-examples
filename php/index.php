@@ -25,19 +25,20 @@ $options['client_redirect_url'] = "http://localhost" . $options['port'] . "/oaut
 
 # Decide how to service incoming requests based on the path
 switch ($_SERVER['REQUEST_URI']) {
-  case '/oauth':
+  case preg_match('/oauth/', $a):
     $me = process_client_redirect($options);
     echo("<p>Here's some information about the user:</p>");
     echo("<pre>");
     print_r ($me);
     echo("</pre>");
     break;
-  
+
   default:
     # Our home page route will create a Clever Instant Login button for users from the district our $district_id is set to.
     $sign_in_link = generate_sign_in_with_clever_link($options);
     echo("<h1>Login!</h1>");
     echo('<p>' . $sign_in_link . '</p>');
+    echo($_SERVER['REQUEST_URI']);
     break;
 }
 
@@ -45,7 +46,8 @@ switch ($_SERVER['REQUEST_URI']) {
 function process_client_redirect($options) {
   $code = $_GET['code'];
   $bearer_token = exchange_code_for_bearer_token($code, $options);
-  $me_response = request_from_clever($options['clever_api_me_url']);
+  $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
+  $me_response = request_from_clever($options['clever_api_me_url'], $request_options, $options);
   return $me_response['response'];
 }
 
@@ -54,7 +56,8 @@ function exchange_code_for_bearer_token($code, $options) {
   $data = array('code' => $code,
                 'grant_type' => 'authorization_code',
                 'redirect_uri' => $options['client_redirect_url']);
-  $response = request_from_clever($options['clever_oauth_tokens_url'], array('method' => 'POST', 'data' => $data));
+  $request_options = array('method' => 'POST', 'data' => $data);
+  $response = request_from_clever($options['clever_oauth_tokens_url'], $request_options, $options);
   $bearer_token = $response['response']['access_token'];
   return $bearer_token;
 }
@@ -71,7 +74,7 @@ function request_from_clever($url, $request_options, $clever_options) {
     curl_setopt($ch, CURLOPT_USERPWD, $clever_options['client_id'] . ':' . $clever_options['client_secret']);
   }
   if ($options['method'] == 'POST') {
-    curl_setopt($ch, CURLOPT_POST, 1);    
+    curl_setopt($ch, CURLOPT_POST, 1);
     if ($options['data']) {
       curl_setopt($ch, CURLOPT_POSTFIELDS, $options['data']);
     }
