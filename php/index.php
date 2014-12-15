@@ -1,45 +1,105 @@
 <?php
+# A sample Clever Instant Login implementation.
+
 error_reporting(-1);
 
-// From: https://account.clever.com/partner/applications
-$client_id = $_ENV["CLEVER_CLIENT_ID"];
-$client_secret = $_ENV["CLEVER_CLIENT_SECRET"];
-$client_redirect = $_ENV["CLEVER_CLIENT_REDIRECT"]; // e.g. https://myawesomeapp.com/clever/oauth.php
+// # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
 
-// Clever sends a code that can be redeemed for a token
-$code = $_GET['code'];
+$options = array(
+  'client_id' => $_ENV["CLEVER_CLIENT_ID"],
+  'client_secret' => $_ENV["CLEVER_CLIENT_SECRET"],
+  'port' => $_ENV=["CLEVER_PORT"] || 2587,
+  'district_id' => $_ENV['DISTRICT_ID'],
+  'clever_oauth_base' => 'https://clever.com/oauth',
+  'clever_api_base' => 'https://api.clever.com',
+);
 
-echo("<p>Code is " . $code . ".</p>");
-echo("<p>Redeeming code for token.</p>");
+$options['clever_oauth_tokens_url'] = $options['clever_oauth_base'] . "/tokens";
+$options['clever_oauth_authorize_url'] = $options['clever_oauth_base'] . "/authorize";
+$options['clever_api_me_url'] = $options['clever_api_base'] . '/me';
 
-$ch = curl_init($_ENV["CLEVER_API_BASE"] . "/oauth/token");
-$data = array('code'         => $code,
-                'grant_type'   => 'authorization_code',
-                'redirect_uri' => $client_redirect);
+# Clever redirect URIs must be preregistered on your developer dashboard.
+# If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
+$options['client_redirect_url'] = "http://localhost" . $options['port'] . "/oauth";
 
-// use client_secret as basic auth password
-curl_setopt($ch, CURLOPT_USERPWD, $client_id . ':' . $client_secret);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-$response = json_decode(curl_exec($ch));
 
-$access_token = $response->access_token;
-echo("<p>Access token is " . $access_token . ".</p>");
-echo("<p>Using token to look up user information.</p>");
+# Decide how to service incoming requests based on the path
+switch ($_SERVER['REQUEST_URI']) {
+  case '/oauth':
+    $me = process_client_redirect($options);
+    echo("<p>Here's some information about the user:</p>");
+    echo("<pre>");
+    print_r ($me);
+    echo("</pre>");
+    break;
+  
+  default:
+    # Our home page route will create a Clever Instant Login button for users from the district our $district_id is set to.
+    $sign_in_link = generate_sign_in_with_clever_link($options);
+    echo("<h1>Login!</h1>");
+    echo('<p>' . $sign_in_link . '</p>');
+    break;
+}
 
-$ch = curl_init($_ENV["CLEVER_API_BASE"] . "/me");
-// Use access token from previous call as bearer token to authenticate
-$header = array('Authorization: Bearer ' . $access_token);
-curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-$response = json_decode(curl_exec($ch));
+# Processes incoming requests to our $client_redriect
+function process_client_redirect($options) {
+  $code = $_GET['code'];
+  $bearer_token = exchange_code_for_bearer_token($code, $options);
+  $me_response = request_from_clever($options['clever_api_me_url']);
+  return $me_response['response'];
+}
 
-echo("<p>Here's some information about the user:</p>");
-echo("<pre>");
-print_r ($response);
-echo("</pre>");
-echo("<p>// Next: Look this user up in my database</p>");
-echo("<p>// Next: Create a session for them (or show an error message)</p>");
+# Exchanges a $code value received in a $client_redirect for a bearer token
+function exchange_code_for_bearer_token($code, $options) {
+  $data = array('code' => $code,
+                'grant_type' => 'authorization_code',
+                'redirect_uri' => $options['client_redirect_url']);
+  $response = request_from_clever($options['clever_oauth_tokens_url'], array('method' => 'POST', 'data' => $data));
+  $bearer_token = $response['response']['access_token'];
+  return $bearer_token;
+}
+
+# General purpose HTTP wrapper for working with the Clever API
+function request_from_clever($url, $request_options, $clever_options) {
+  $ch = curl_init($url);
+  $request_headers = array('Accept: application/json');
+  if ($request_options['bearer_token']) {
+    $auth_header = 'Authorization: Bearer ' . $request_options['bearer_token'];
+    $request_headers[] = $auth_header;
+  } else {
+    # When we don't have a bearer token, assume we're performing client auth.
+    curl_setopt($ch, CURLOPT_USERPWD, $clever_options['client_id'] . ':' . $clever_options['client_secret']);
+  }
+  if ($options['method'] == 'POST') {
+    curl_setopt($ch, CURLOPT_POST, 1);    
+    if ($options['data']) {
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $options['data']);
+    }
+  }
+  # Set prepared HTTP headers
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  $raw_response = curl_exec($ch);
+  $parsed_response = json_decode($raw_response);
+  $curl_info = curl_getinfo($ch);
+  # Prepare the parsed and raw repsonse for further use.
+  return array('response' => $parsed_response, 'raw_response' => $raw_response, 'curl_info' => $curl_info);
+}
+
+function generate_sign_in_with_clever_url($options) {
+  $request_params = array(
+    'response_type' => 'code',
+    'redirect_uri' => $options['client_redirect_url'],
+    'client_id' => $options['client_id'],
+    'scope' => 'read:user_id read:sis',
+    'district_id' => $options['district_id']
+  );
+  $querystring = http_build_query($request_params);
+  return ($options['clever_oauth_authorize_url'] . '?' . $querystring);
+}
+
+function generate_sign_in_with_clever_link($options) {
+  return "<a href='" . generate_sign_in_with_clever_url($options) . "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a>";
+}
 
 ?>
