@@ -3,7 +3,7 @@
 
 error_reporting(-1);
 
-if($_SERVER && $_SERVER['REQUEST_URI']) {
+if($_SERVER && array_key_exists('REQUEST_URI', $_SERVER)) {
   process_incoming_requests($_SERVER['REQUEST_URI'], set_options());
 }
   
