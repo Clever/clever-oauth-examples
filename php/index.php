@@ -3,43 +3,50 @@
 
 error_reporting(-1);
 
-// # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
+if($_SERVER && $_SERVER['REQUEST_URI']) {
+  process_incoming_requests($_SERVER['REQUEST_URI'], set_options());
+}
+  
+function set_options($override_options = array()) {
+  $options = array(
+    // # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
+    'client_id' => $_ENV["CLEVER_CLIENT_ID"],
+    'client_secret' => $_ENV["CLEVER_CLIENT_SECRET"],
+    'port' => $_ENV=["CLEVER_PORT"] || 2587,
+    'district_id' => $_ENV['DISTRICT_ID'],
+    'clever_oauth_base' => 'https://clever.com/oauth',
+    'clever_api_base' => 'https://api.clever.com',
+  );
+  array_merge($options, $override_options);
+  $options['clever_oauth_tokens_url'] = $options['clever_oauth_base'] . "/tokens";
+  $options['clever_oauth_authorize_url'] = $options['clever_oauth_base'] . "/authorize";
+  $options['clever_api_me_url'] = $options['clever_api_base'] . '/me';
+  # Clever redirect URIs must be preregistered on your developer dashboard.
+  # If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
+  $options['client_redirect_url'] = "http://localhost" . $options['port'] . "/oauth";
+  return $options;
+}
 
-$options = array(
-  'client_id' => $_ENV["CLEVER_CLIENT_ID"],
-  'client_secret' => $_ENV["CLEVER_CLIENT_SECRET"],
-  'port' => $_ENV=["CLEVER_PORT"] || 2587,
-  'district_id' => $_ENV['DISTRICT_ID'],
-  'clever_oauth_base' => 'https://clever.com/oauth',
-  'clever_api_base' => 'https://api.clever.com',
-);
 
-$options['clever_oauth_tokens_url'] = $options['clever_oauth_base'] . "/tokens";
-$options['clever_oauth_authorize_url'] = $options['clever_oauth_base'] . "/authorize";
-$options['clever_api_me_url'] = $options['clever_api_base'] . '/me';
+function process_incoming_requests($incoming_request_uri, $options) {
+  # Decide how to service incoming requests based on the path
+  switch ($incoming_request_uri) {
+    case preg_match('/oauth/', $a):
+      $me = process_client_redirect($options);
+      echo("<p>Here's some information about the user:</p>");
+      echo("<pre>");
+      print_r ($me);
+      echo("</pre>");
+      break;
 
-# Clever redirect URIs must be preregistered on your developer dashboard.
-# If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
-$options['client_redirect_url'] = "http://localhost" . $options['port'] . "/oauth";
-
-
-# Decide how to service incoming requests based on the path
-switch ($_SERVER['REQUEST_URI']) {
-  case preg_match('/oauth/', $a):
-    $me = process_client_redirect($options);
-    echo("<p>Here's some information about the user:</p>");
-    echo("<pre>");
-    print_r ($me);
-    echo("</pre>");
-    break;
-
-  default:
-    # Our home page route will create a Clever Instant Login button for users from the district our $district_id is set to.
-    $sign_in_link = generate_sign_in_with_clever_link($options);
-    echo("<h1>Login!</h1>");
-    echo('<p>' . $sign_in_link . '</p>');
-    echo($_SERVER['REQUEST_URI']);
-    break;
+    default:
+      # Our home page route will create a Clever Instant Login button for users from the district our $district_id is set to.
+      $sign_in_link = generate_sign_in_with_clever_link($options);
+      echo("<h1>Login!</h1>");
+      echo('<p>' . $sign_in_link . '</p>');
+      echo($_SERVER['REQUEST_URI']);
+      break;
+  }
 }
 
 # Processes incoming requests to our $client_redriect
@@ -73,16 +80,20 @@ function request_from_clever($url, $request_options, $clever_options) {
     # When we don't have a bearer token, assume we're performing client auth.
     curl_setopt($ch, CURLOPT_USERPWD, $clever_options['client_id'] . ':' . $clever_options['client_secret']);
   }
-  if ($options['method'] == 'POST') {
+  if ($request_options['method'] == 'POST') {
     curl_setopt($ch, CURLOPT_POST, 1);
-    if ($options['data']) {
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $options['data']);
+    if ($request_options['data']) {
+      curl_setopt($ch, CURLOPT_POSTFIELDS, $request_options['data']);
     }
   }
   # Set prepared HTTP headers
   curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  $raw_response = curl_exec($ch);
+  if(!$clever_options['mock_response']) {
+    $raw_response = curl_exec($ch);
+  } else {
+    $raw_response = $clever_options['mock_response'];
+  }
   $parsed_response = json_decode($raw_response);
   $curl_info = curl_getinfo($ch);
   # Prepare the parsed and raw repsonse for further use.
