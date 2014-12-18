@@ -1,7 +1,7 @@
 <?php
 # A sample Clever Instant Login implementation.
 
-error_reporting(-1);
+// error_reporting(-1);
 
 if($_SERVER && array_key_exists('REQUEST_URI', $_SERVER)) {
   process_incoming_requests($_SERVER['REQUEST_URI'], set_options());
@@ -44,7 +44,6 @@ function process_incoming_requests($incoming_request_uri, $options) {
       $sign_in_link = generate_sign_in_with_clever_link($options);
       echo("<h1>Login!</h1>");
       echo('<p>' . $sign_in_link . '</p>');
-      echo($_SERVER['REQUEST_URI']);
       break;
   }
 }
@@ -73,14 +72,14 @@ function exchange_code_for_bearer_token($code, $options) {
 function request_from_clever($url, $request_options, $clever_options) {
   $ch = curl_init($url);
   $request_headers = array('Accept: application/json');
-  if ($request_options['bearer_token']) {
+  if ($request_options && array_key_exists('bearer_token', $request_options)) {
     $auth_header = 'Authorization: Bearer ' . $request_options['bearer_token'];
     $request_headers[] = $auth_header;
   } else {
     # When we don't have a bearer token, assume we're performing client auth.
     curl_setopt($ch, CURLOPT_USERPWD, $clever_options['client_id'] . ':' . $clever_options['client_secret']);
   }
-  if ($request_options['method'] == 'POST') {
+  if ($request_options && array_key_exists('method', $request_options) && $request_options['method'] == 'POST') {
     curl_setopt($ch, CURLOPT_POST, 1);
     if ($request_options['data']) {
       curl_setopt($ch, CURLOPT_POSTFIELDS, $request_options['data']);
@@ -89,12 +88,8 @@ function request_from_clever($url, $request_options, $clever_options) {
   # Set prepared HTTP headers
   curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  if(!$clever_options['mock_response']) {
-    $raw_response = curl_exec($ch);
-  } else {
-    $raw_response = $clever_options['mock_response'];
-  }
-  $parsed_response = json_decode($raw_response);
+  $raw_response = curl_exec($ch);
+  $parsed_response = json_decode($raw_response, true);
   $curl_info = curl_getinfo($ch);
   # Prepare the parsed and raw repsonse for further use.
   return array('response' => $parsed_response, 'raw_response' => $raw_response, 'curl_info' => $curl_info);
