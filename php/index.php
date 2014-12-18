@@ -12,7 +12,7 @@ function set_options($override_options = array()) {
     // # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
     'client_id' => $_ENV["CLEVER_CLIENT_ID"],
     'client_secret' => $_ENV["CLEVER_CLIENT_SECRET"],
-    'port' => $_ENV=["CLEVER_PORT"] || 2587,
+    'port' => $_ENV=["PORT"] || 2587,
     'district_id' => $_ENV['DISTRICT_ID'],
     'clever_oauth_base' => 'https://clever.com/oauth',
     'clever_api_base' => 'https://api.clever.com',
