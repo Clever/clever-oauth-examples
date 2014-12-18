@@ -21,6 +21,20 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
   }
 
   public function testProcessClientRedirect() {
+    $mock_request_options = prepare_options_for_clever();
+    $token_hash_response = array('access_token' => 'abcd');
+    $token_string_response = json_encode($token_hash_response);
+    $this->http->mock->
+        when()->methodIs('POST')->pathIs('/oauth/tokens')->
+        then()->body($token_string_response)->end();
+    $me_hash_response = prepare_me_response_hash();
+    $me_string_response = json_encode($me_hash_response);
+    $this->http->mock->
+        when()->methodIs('GET')->pathIs('/me')->
+        then()->body($me_string_response);
+    $this->http->setUp();
+    $me_response = process_client_redirect('xyz', $mock_request_options);
+    $this->assertEquals($me_response, $me_hash_response);
   }
 
   public function testExchangeCodeForBearerToken() {
@@ -58,7 +72,7 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
     $wanted_authorize_url = $our_options['clever_oauth_authorize_url'];
     $url = generate_sign_in_with_clever_url($our_options);
     $this->assertStringStartsWith($wanted_authorize_url, $url);
-$this->assertRegExp("@redirect_uri=$wanted_redirect_url@", $url);
+    $this->assertRegExp("@redirect_uri=$wanted_redirect_url@", $url);
     $this->assertRegExp(("@district_id=$wanted_district_id@"), $url);
     $this->assertRegExp(("@client_id=$wanted_client_id@"), $url);
   }
@@ -76,6 +90,7 @@ $this->assertRegExp("@redirect_uri=$wanted_redirect_url@", $url);
   }
 }
 
+# Instructs our API requests to use mock environment
 function prepare_options_for_clever() {
   $options = array(
     "client_redirect_url" => "http://localhost:1234/oauth",
@@ -90,4 +105,20 @@ function prepare_options_for_clever() {
   return $options;
 }
 
+# Prepares a consistent response to /me
+function prepare_me_response_hash() {
+  return array(
+    'data' => array(
+      "district" => "4fd43cc56d11340000000005",
+      "id" => "4fee004cca2e43cf2700028b",
+      "type" => "student"      
+    ),
+    'links' => array(
+      array(
+        'uri' => "/me",
+        'rel' => "self"
+      )
+    )
+  );
+}
 ?>

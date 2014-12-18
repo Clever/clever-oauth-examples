@@ -32,7 +32,7 @@ function process_incoming_requests($incoming_request_uri, $options) {
   # Decide how to service incoming requests based on the path
   switch ($incoming_request_uri) {
     case preg_match('/oauth/', $a):
-      $me = process_client_redirect($options);
+      $me = process_client_redirect($_GET['code'], $options);
       echo("<p>Here's some information about the user:</p>");
       echo("<pre>");
       print_r ($me);
@@ -49,8 +49,7 @@ function process_incoming_requests($incoming_request_uri, $options) {
 }
 
 # Processes incoming requests to our $client_redriect
-function process_client_redirect($options) {
-  $code = $_GET['code'];
+function process_client_redirect($code, $options) {
   $bearer_token = exchange_code_for_bearer_token($code, $options);
   $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
   $me_response = request_from_clever($options['clever_api_me_url'], $request_options, $options);
