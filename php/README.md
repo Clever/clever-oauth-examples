@@ -15,7 +15,7 @@ Use `bin/start_sample_server.sh` to easily start serving on localhost:2587.
 ### Tests
 To run this example's tests, you will need to install the phpunit and http-mock.
 
-Installing these dependcies is easy with [Composer](https://getcomposer.org/).
+Installing these dependencies is easy with [Composer](https://getcomposer.org/).
 
 `composer install`
 
