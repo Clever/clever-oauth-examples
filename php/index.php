@@ -30,18 +30,23 @@ function set_options($override_options = array()) {
   return $options;
 }
 
-
+// Services requests based on the incoming request path
 function process_incoming_requests($incoming_request_uri, $options) {
-  # Service incoming requests based on the incoming request path
   switch ($incoming_request_uri) {
     case preg_match('/oauth/', $a):
-      $me = process_client_redirect($_GET['code'], $options);
-      echo("<p>Here's some information about the user:</p>");
-      echo("<pre>");
-      print_r ($me);
-      echo("</pre>");
-      break;
-
+      try {
+        $me = process_client_redirect($_GET['code'], $options);
+        echo("<p>Here's some information about the user:</p>");
+        echo("<pre>");
+        print_r ($me);
+        echo("</pre>");
+        break;
+      } catch (Exception $e) {
+        echo("<p>Something exceptional happened while interacting with Clever.");
+        echo("<pre>");
+        print_r ($e);
+        echo("</pre>");
+      }
     default:
       # Our home page route will create a Clever Instant Login button for users from the district our $district_id is set to.
       $sign_in_link = generate_sign_in_with_clever_link($options);
@@ -58,6 +63,8 @@ function process_client_redirect($code, $options) {
   $bearer_token = exchange_code_for_bearer_token($code, $options);
   $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
   $me_response = retrieve_me_response_for_bearer_token($bearer_token, $options);
+
+  # Real world applications would store the bearer token and relevant information about the user at this stage.
   return $me_response;
 }
 
@@ -93,7 +100,7 @@ function retrieve_me_response_for_bearer_token($bearer_token, $options) {
 }
 
 // General purpose HTTP wrapper for working with the Clever API
-
+// Returns a structured hash with pertinent response & request details
 function request_from_clever($url, $request_options, $clever_options) {
   $ch = curl_init($url);
   $request_headers = array('Accept: application/json');
