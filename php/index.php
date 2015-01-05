@@ -57,8 +57,8 @@ function process_incoming_requests($incoming_request_uri, $options) {
 function process_client_redirect($code, $options) {
   $bearer_token = exchange_code_for_bearer_token($code, $options);
   $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
-  $me_response = request_from_clever($options['clever_api_me_url'], $request_options, $options);
-  return $me_response['response'];
+  $me_response = retrieve_me_response_for_bearer_token($bearer_token, $options);
+  return $me_response;
 }
 
 // Exchanges a $code value received in a $client_redirect for a bearer token
@@ -69,8 +69,27 @@ function exchange_code_for_bearer_token($code, $options) {
                 'redirect_uri' => $options['client_redirect_url']);
   $request_options = array('method' => 'POST', 'data' => $data);
   $response = request_from_clever($options['clever_oauth_tokens_url'], $request_options, $options);
-  $bearer_token = $response['response']['access_token'];
-  return $bearer_token;
+  # Evaluate if the response is successful
+  if ($response && $response['response_code'] && $response['response_code'] == 200) {
+    $bearer_token = $response['response']['access_token'];
+    return $bearer_token;
+  } else {
+    # Handle condition when $code cannot be exchanged for bearer token from Clever
+    throw new Exception("Cannot retrieve bearer token.");
+  }
+}
+
+// Uses the specified bearer token to retrieve the /me response for the user
+function retrieve_me_response_for_bearer_token($bearer_token, $options) {
+  $request_options = array('method' => 'GET', 'data' => array('bearer_token' => $bearer_token));
+  $response = request_from_clever($options['clever_api_me_url'], $request_options, $options);
+  # Evaluate if the response is successful
+  if ($response && $response['response_code'] && $response['response_code'] == 200) {
+    return $response['response'];
+  } else {
+    # Handle condition when /me response cannot be retrieved for bearer token
+    throw new Exeception("Could not retrieve /me response for bearer token.");
+  }
 }
 
 // General purpose HTTP wrapper for working with the Clever API
