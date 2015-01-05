@@ -58,11 +58,32 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
         when()->methodIs('GET')->pathIs('/')->
         then()->body($json_string_response)->end();
     $this->http->setUp();
-        
+
     $response = request_from_clever("http://localhost:1234", array(), $mock_request_options);
     $this->assertEquals($json_string_response, $response['raw_response']);
     $this->assertEquals($json_hash_response, $response['response']);
   }
+
+  public function testErrorHandlingFromClever() {
+    $mock_request_options = prepare_options_for_clever();
+    $this->http->mock->
+    when()->methodIs('GET')->pathIs('/')->
+    then()->statusCode(500)->end();
+    $this->http->setUp();
+    $response = request_from_clever("http://localhost:1234", array(), $mock_request_options);
+    $this->assertEquals(500, $response['response_code']);
+  }
+
+  public function testErrorHandlingFromCurl() {
+    $mock_request_options = prepare_options_for_clever();
+    try {
+      $response = request_from_clever("httpl://explorer:1234", array(), $mock_request_options);
+      $this->fail("Expected exception not thrown");
+    } catch(Exception $e) {
+      $this->assertRegExp("@cURL failure@", $e->getMessage());
+    }
+  }
+
 
   public function testGenerateSignInWithCleverUrl() {
     $our_options = prepare_options_for_clever();
@@ -111,7 +132,7 @@ function prepare_me_response_hash() {
     'data' => array(
       "district" => "4fd43cc56d11340000000005",
       "id" => "4fee004cca2e43cf2700028b",
-      "type" => "student"      
+      "type" => "student"
     ),
     'links' => array(
       array(

@@ -1,15 +1,17 @@
 <?php
 # A sample Clever Instant Login implementation.
 
-// error_reporting(-1);
+error_reporting(E_ALL);
 
+// Handle incoming requests if we're running in a web server context
 if($_SERVER && array_key_exists('REQUEST_URI', $_SERVER)) {
   process_incoming_requests($_SERVER['REQUEST_URI'], set_options());
 }
-  
+
+// Prepare options common to interacting with Clever's authentication & API
 function set_options($override_options = array()) {
   $options = array(
-    // # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
+    # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
     'client_id' => $_ENV["CLEVER_CLIENT_ID"],
     'client_secret' => $_ENV["CLEVER_CLIENT_SECRET"],
     'port' => $_ENV=["PORT"] || 2587,
@@ -21,6 +23,7 @@ function set_options($override_options = array()) {
   $options['clever_oauth_tokens_url'] = $options['clever_oauth_base'] . "/tokens";
   $options['clever_oauth_authorize_url'] = $options['clever_oauth_base'] . "/authorize";
   $options['clever_api_me_url'] = $options['clever_api_base'] . '/me';
+
   # Clever redirect URIs must be preregistered on your developer dashboard.
   # If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
   $options['client_redirect_url'] = "http://localhost" . $options['port'] . "/oauth";
@@ -29,7 +32,7 @@ function set_options($override_options = array()) {
 
 
 function process_incoming_requests($incoming_request_uri, $options) {
-  # Decide how to service incoming requests based on the path
+  # Service incoming requests based on the incoming request path
   switch ($incoming_request_uri) {
     case preg_match('/oauth/', $a):
       $me = process_client_redirect($_GET['code'], $options);
@@ -48,7 +51,9 @@ function process_incoming_requests($incoming_request_uri, $options) {
   }
 }
 
-# Processes incoming requests to our $client_redriect
+// Processes incoming requests to our $client_redirect
+// 1. Exchanges incoming code parameter for a bearer token
+// 2. Uses bearer token in a request to Clever's "/me" API resource
 function process_client_redirect($code, $options) {
   $bearer_token = exchange_code_for_bearer_token($code, $options);
   $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
@@ -56,7 +61,8 @@ function process_client_redirect($code, $options) {
   return $me_response['response'];
 }
 
-# Exchanges a $code value received in a $client_redirect for a bearer token
+// Exchanges a $code value received in a $client_redirect for a bearer token
+// Returns the bearer token string
 function exchange_code_for_bearer_token($code, $options) {
   $data = array('code' => $code,
                 'grant_type' => 'authorization_code',
@@ -67,7 +73,8 @@ function exchange_code_for_bearer_token($code, $options) {
   return $bearer_token;
 }
 
-# General purpose HTTP wrapper for working with the Clever API
+// General purpose HTTP wrapper for working with the Clever API
+
 function request_from_clever($url, $request_options, $clever_options) {
   $ch = curl_init($url);
   $request_headers = array('Accept: application/json');
@@ -90,10 +97,20 @@ function request_from_clever($url, $request_options, $clever_options) {
   $raw_response = curl_exec($ch);
   $parsed_response = json_decode($raw_response, true);
   $curl_info = curl_getinfo($ch);
-  # Prepare the parsed and raw repsonse for further use.
-  return array('response' => $parsed_response, 'raw_response' => $raw_response, 'curl_info' => $curl_info);
+
+  # Provide the HTTP response code for easy error handling.
+  $response_code = $curl_info['http_code'];
+
+  if($curl_error = curl_errno($ch)) {
+    $error_message = curl_strerror($curl_error);
+    throw new Exception("cURL failure #{$curl_error}: {$error_message}");
+  }
+
+  # Prepare the parsed and raw response for further use.
+  return array('response_code' => $response_code, 'response' => $parsed_response, 'raw_response' => $raw_response, 'curl_info' => $curl_info);
 }
 
+// Generates a "Sign in with Clever" instant login URL based on the application's current district context
 function generate_sign_in_with_clever_url($options) {
   $request_params = array(
     'response_type' => 'code',
@@ -106,6 +123,7 @@ function generate_sign_in_with_clever_url($options) {
   return ($options['clever_oauth_authorize_url'] . '?' . $querystring);
 }
 
+// Generates a HTML "Sign in with Clever" instant login link
 function generate_sign_in_with_clever_link($options) {
   return "<a href='" . generate_sign_in_with_clever_url($options) . "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a>";
 }
