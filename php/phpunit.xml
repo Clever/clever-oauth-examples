@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit colors="true" stopOnError="false" stopOnFailure="false" stopOnIncomplete="false" stopOnSkipped="false" verbose="true">
+<phpunit colors="true" verbose="true">
   <testsuites>
     <testsuite name="AllTests">
       <directory>./Test</directory>
