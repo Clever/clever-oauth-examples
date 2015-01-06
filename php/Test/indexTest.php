@@ -84,7 +84,6 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
     }
   }
 
-
   public function testGenerateSignInWithCleverUrl() {
     $our_options = prepare_options_for_clever();
     $wanted_redirect_url = preg_quote(urlencode($our_options['client_redirect_url']));
@@ -111,7 +110,7 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
   }
 }
 
-# Instructs our API requests to use mock environment
+// Instructs our API requests to use mock environment
 function prepare_options_for_clever() {
   $options = array(
     "client_redirect_url" => "http://localhost:1234/oauth",
@@ -126,7 +125,7 @@ function prepare_options_for_clever() {
   return $options;
 }
 
-# Prepares a consistent response to /me
+// Prepares a consistent response to /me
 function prepare_me_response_hash() {
   return array(
     'data' => array(
@@ -142,4 +141,3 @@ function prepare_me_response_hash() {
     )
   );
 }
-?>
