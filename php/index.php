@@ -1,5 +1,7 @@
 <?php
-// A sample Clever Instant Login implementation.
+/**
+* This script demonstrates Clever Instant Login, using OAuth 2.0 for token acquistion & request authentication.
+*/
 
 error_reporting(E_ALL);
 
@@ -8,7 +10,12 @@ if($_SERVER && array_key_exists('REQUEST_URI', $_SERVER)) {
   process_incoming_requests($_SERVER['REQUEST_URI'], set_options());
 }
 
-// Prepare options common to interacting with Clever's authentication & API
+/**
+* Prepares options common to interacting with Clever's authentication & API
+*
+* @param   array $override_options  Options to oveverride from defaults
+* @return  array $results           Options for use in Clever API requests
+*/
 function set_options(array $override_options = NULL) {
   $options = array(
     # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
@@ -33,7 +40,12 @@ function set_options(array $override_options = NULL) {
   return $options;
 }
 
-// Services requests based on the incoming request path
+/**
+* Services requests based on the incoming request path
+*
+* @param   string $incoming_request_uri  The URI being visited in this script
+* @param   array  $options               Options used for Clever API requests
+*/
 function process_incoming_requests($incoming_request_uri, array $options) {
   switch ($incoming_request_uri) {
     case preg_match('/oauth/', $a):
@@ -59,9 +71,14 @@ function process_incoming_requests($incoming_request_uri, array $options) {
   }
 }
 
-// Processes incoming requests to our $client_redirect
-// 1. Exchanges incoming code parameter for a bearer token
-// 2. Uses bearer token in a request to Clever's "/me" API resource
+/**
+* Processes incoming requests to our $client_redirect
+* 1. Exchanges incoming code parameter for a bearer token
+* 2. Uses bearer token in a request to Clever's "/me" API resource
+* @param   string $code         OAuth 2.0 exchange code received when our OAuth redirect was triggered
+* @param   array  $options      Options used for Clever API requests
+* @return  array  $me_response  Hash of Clever's response when identifying a bearer token's owner
+*/
 function process_client_redirect($code, array $options) {
   $bearer_token = exchange_code_for_bearer_token($code, $options);
   $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
@@ -71,8 +88,13 @@ function process_client_redirect($code, array $options) {
   return $me_response;
 }
 
-// Exchanges a $code value received in a $client_redirect for a bearer token
-// Returns the bearer token string
+/**
+* Exchanges a $code value received in a $client_redirect for a bearer token
+* @param   string $code          OAuth 2.0 exchange code received when our OAuth redirect was triggered
+* @param   array  $options       Options used for Clever API requests
+* @throws  Exception if the bearer token cannot be retrieved
+* @return  string $bearer_token  The string value of a user's OAuth 2.0 access token
+*/
 function exchange_code_for_bearer_token($code, array $options) {
   $data = array('code' => $code,
                 'grant_type' => 'authorization_code',
@@ -89,21 +111,34 @@ function exchange_code_for_bearer_token($code, array $options) {
   }
 }
 
-// Uses the specified bearer token to retrieve the /me response for the user
+/**
+* Uses the specified bearer token to retrieve the /me response for the user
+* @param   string $bearer_token   The string value of a user's OAuth 2.0 access token
+* @param   array  $options        Options used for Clever API requests
+* @throws  Exception if the /me API response cannot be retrieved
+* @return  array $oauth_response  Hash of Clever's response when identifying a bearer token's owner
+*/
 function retrieve_me_response_for_bearer_token($bearer_token, array $options) {
   $request_options = array('method' => 'GET', 'data' => array('bearer_token' => $bearer_token));
   $response = request_from_clever($options['clever_api_me_url'], $request_options, $options);
   // Evaluate if the response is successful
   if ($response && $response['response_code'] && $response['response_code'] == 200) {
-    return $response['response'];
+    $oauth_response = $response['response'];
+    return $oauth_response;
   } else {
     // Handle condition when /me response cannot be retrieved for bearer token
     throw new Exeception("Could not retrieve /me response for bearer token.");
   }
 }
 
-// General purpose HTTP wrapper for working with the Clever API
-// Returns a structured hash with pertinent response & request details
+/**
+* General-purpose HTTP wrapper for working with the Clever API
+* @param   string $url                 The fully-qualified URL that the request will be issued to
+* @param   array  $request_options      Hash of options pertinent to the specific request
+* @param   array  $clever_options       Hash of options more generally associated with Clever API requests
+* @throws  Exception when the HTTP library, cURL, cannot issue the request
+* @return  array  $normalized_response  A structured hash with pertinent response & request details
+*/
 function request_from_clever($url, array $request_options, array $clever_options) {
   $ch = curl_init($url);
   $request_headers = array('Accept: application/json');
@@ -136,10 +171,15 @@ function request_from_clever($url, array $request_options, array $clever_options
   }
 
   // Prepare the parsed and raw response for further use.
-  return array('response_code' => $response_code, 'response' => $parsed_response, 'raw_response' => $raw_response, 'curl_info' => $curl_info);
+  $normalized_response = array('response_code' => $response_code, 'response' => $parsed_response, 'raw_response' => $raw_response, 'curl_info' => $curl_info);
+  return $normalized_response;
 }
 
-// Generates a "Sign in with Clever" instant login URL based on the application's current district context
+/**
+* Generates a "Sign in with Clever" instant login URL based on the application's current district context
+* @param   array  $options  Options used for Clever API requests
+* @return  string $url      A URL representing the destination for a Sign in with Clever button
+*/
 function generate_sign_in_with_clever_url(array $options) {
   $request_params = array(
     'response_type' => 'code',
@@ -149,10 +189,16 @@ function generate_sign_in_with_clever_url(array $options) {
     'district_id' => $options['district_id']
   );
   $querystring = http_build_query($request_params);
-  return ($options['clever_oauth_authorize_url'] . '?' . $querystring);
+  $url = $options['clever_oauth_authorize_url'] . '?' . $querystring;
+  return $url;
 }
 
-// Generates a HTML "Sign in with Clever" instant login link
+/**
+* Generates a HTML "Sign in with Clever" instant login link
+* @param   array  $options  Options used for Clever API requests
+* @return  string $html     A HTML anchor tag linking to the destination for a Sign in with Clever button
+*/
 function generate_sign_in_with_clever_link(array $options) {
-  return "<a href='" . generate_sign_in_with_clever_url($options) . "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a>";
+  $html = "<a href='" . generate_sign_in_with_clever_url($options) . "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a>";
+  return $html;
 }
