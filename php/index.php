@@ -53,13 +53,13 @@ function process_incoming_requests($incoming_request_uri, array $options) {
         $me = process_client_redirect($_GET['code'], $options);
         echo("<p>Here's some information about the user:</p>");
         echo("<pre>");
-        print_r ($me);
+        print_r($me);
         echo("</pre>");
         break;
       } catch (Exception $e) {
         echo("<p>Something exceptional happened while interacting with Clever.");
         echo("<pre>");
-        print_r ($e);
+        print_r($e);
         echo("</pre>");
       }
     default:
