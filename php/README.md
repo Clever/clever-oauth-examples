@@ -3,7 +3,7 @@ Clever Instant Login PHP Example
 
 This sample code demonstrates how to perform token exchange with Clever's Instant Login API.
 
-This example was built using procedural PHP. The sample code itself relies on no external PHP dependencies.
+This example was built using procedural PHP. The sample code itself relies on no external PHP dependencies. It has been fully tested with PHP 5.5.
 
 ### Running the sample code
 The sample code relies on some environment variables to easily set state. Productionized applications should use more robust configuration schemes.
