@@ -1,12 +1,6 @@
 <?php
 /**
  * This script demonstrates Clever Instant Login, using OAuth 2.0 for token acquistion & request authentication.
- * When run in a server context, process_incoming_requests() will listen for incoming HTTP requests on the specified host and port after evaluating pertinent configuration options.
- * Requests to "/" or any paths besides "/oauth" will be served a simple HTML page. If you've configured a Clever district ID, a "Sign in with Clever" link will be displayed. When that link is followed and authentication is completed on clever.com, the user will be redirected to this script's OAuth 2.0 redirect flow.
- * Requests to "/oauth" will be treated as OAuth 2.0 client redirects and passed to our process_client_redirect() function to perform a few brief steps:
- * - The exchange code value passed to our redirect URI is exchanged for an OAuth 2.0 bearer token representing the current user
- * - The bearer token will be used in a request to Clever's "/me" API resource to discover additional information about the current user
- * - The current user's information will be displayed in HTML.
  */
 
 // By default, stop on all errors. In a production application, you may want to use only E_WARNING or otherwise silence with ~E_ALL
@@ -29,7 +23,7 @@ function set_options(array $override_options = NULL) {
     // Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
     'client_id' => getenv('CLEVER_CLIENT_ID'),
     'client_secret' => getenv('CLEVER_CLIENT_SECRET'),
-    'port' => getenv('CLEVER_PORT'),
+    'clever_redirect_base' => getenv('CLEVER_REDIRECT_BASE'),
     'district_id' => getenv('CLEVER_DISTRICT_ID'),
     'clever_oauth_base' => 'https://clever.com/oauth',
     'clever_api_base' => 'https://api.clever.com',
@@ -44,8 +38,8 @@ function set_options(array $override_options = NULL) {
 
   // Clever redirect URIs must be preregistered on your developer dashboard.
   // If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
-  $options['client_redirect_url'] = "http://localhost:{$options['port']}/oauth";
-  if (!empty($options['client_id']) && !empty($options['client_secret']) && !empty($options['port'])) {
+  $options['client_redirect_url'] = $options['clever_redirect_base'] . "/oauth";
+  if (!empty($options['client_id']) && !empty($options['client_secret']) && !empty($options['clever_redirect_base'])) {
     return $options;
   } else {
     throw new Exception("Cannot communicate with Clever without configuration.");

@@ -1,2 +1,2 @@
 #!/bin/bash
-php -S localhost:$CLEVER_PORT index.php
+php -S $CLEVER_REDIRECT_BASE index.php

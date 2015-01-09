@@ -124,14 +124,14 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
 // Instructs our API requests to use mock environment
 function prepare_options_for_clever() {
   $options = array(
-    "client_redirect_url" => "http://localhost:1234/oauth",
-    "client_id" => 'abc',
-    "client_secret" => 'def',
-    "district_id" => '123',
-    "port" => 1234,
-    'clever_oauth_tokens_url' => "http://localhost:1234/oauth/tokens",
-    'clever_api_me_url' => "http://localhost:1234/me",
-    "clever_oauth_authorize_url" => "http://localhost:1234/oauth/authorize",
+    'client_id' => 'abc',
+    'client_secret' => 'def',
+    'district_id' => '123',
+    'client_redirect_url' => 'http://localhost:1234/oauth',
+    'clever_redirect_base' => 'http://localhost:1234',
+    'clever_oauth_tokens_url' => 'http://localhost:1234/oauth/tokens',
+    'clever_api_me_url' => 'http://localhost:1234/me',
+    "clever_oauth_authorize_url" => 'http://localhost:1234/oauth/authorize',
   );
   return $options;
 }
