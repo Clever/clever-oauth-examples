@@ -1,7 +1,7 @@
 <?php
 /**
-* This script demonstrates Clever Instant Login, using OAuth 2.0 for token acquistion & request authentication.
-*/
+ * This script demonstrates Clever Instant Login, using OAuth 2.0 for token acquistion & request authentication.
+ */
 
 error_reporting(E_ALL);
 
@@ -11,12 +11,12 @@ if($_SERVER && array_key_exists('REQUEST_URI', $_SERVER)) {
 }
 
 /**
-* Prepares options common to interacting with Clever's authentication & API
-*
-* @param   array $override_options  Options to oveverride from defaults
-* @throws  Exception if configuration options are not adequately met
-* @return  array $results           Options for use in Clever API requests
-*/
+ * Prepares options common to interacting with Clever's authentication & API
+ *
+ * @param   array $override_options  Options to oveverride from defaults
+ * @throws  Exception if configuration options are not adequately met
+ * @return  array $results           Options for use in Clever API requests
+ */
 function set_options(array $override_options = NULL) {
   $options = array(
     # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
@@ -46,11 +46,11 @@ function set_options(array $override_options = NULL) {
 }
 
 /**
-* Services requests based on the incoming request path
-*
-* @param   string $incoming_request_uri  The URI being visited in this script
-* @param   array  $options               Options used for Clever API requests
-*/
+ * Services requests based on the incoming request path
+ *
+ * @param   string $incoming_request_uri  The URI being visited in this script
+ * @param   array  $options               Options used for Clever API requests
+ */
 function process_incoming_requests($incoming_request_uri, array $options) {
   if(preg_match('/oauth/', $incoming_request_uri)) {
     try {
@@ -83,13 +83,13 @@ function process_incoming_requests($incoming_request_uri, array $options) {
 }
 
 /**
-* Processes incoming requests to our $client_redirect
-* 1. Exchanges incoming code parameter for a bearer token
-* 2. Uses bearer token in a request to Clever's "/me" API resource
-* @param   string $code         OAuth 2.0 exchange code received when our OAuth redirect was triggered
-* @param   array  $options      Options used for Clever API requests
-* @return  array  $me_response  Hash of Clever's response when identifying a bearer token's owner
-*/
+ * Processes incoming requests to our $client_redirect
+ * 1. Exchanges incoming code parameter for a bearer token
+ * 2. Uses bearer token in a request to Clever's "/me" API resource
+ * @param   string $code         OAuth 2.0 exchange code received when our  OAuth redirect was triggered
+ * @param   array  $options      Options used for Clever API requests
+ * @return  array  $me_response  Hash of Clever's response when identifying a bearer token's owner
+ */
 function process_client_redirect($code, array $options) {
   $bearer_token = exchange_code_for_bearer_token($code, $options);
   $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
@@ -100,12 +100,12 @@ function process_client_redirect($code, array $options) {
 }
 
 /**
-* Exchanges a $code value received in a $client_redirect for a bearer token
-* @param   string $code          OAuth 2.0 exchange code received when our OAuth redirect was triggered
-* @param   array  $options       Options used for Clever API requests
-* @throws  Exception if the bearer token cannot be retrieved
-* @return  string $bearer_token  The string value of a user's OAuth 2.0 access token
-*/
+ * Exchanges a $code value received in a $client_redirect for a bearer token
+ * @param   string $code          OAuth 2.0 exchange code received when our OAuth redirect was triggered
+ * @param   array  $options       Options used for Clever API requests
+ * @throws  Exception if the bearer token cannot be retrieved
+ * @return  string $bearer_token  The string value of a user's OAuth 2.0 access token
+ */
 function exchange_code_for_bearer_token($code, array $options) {
   $data = array('code' => $code,
                 'grant_type' => 'authorization_code',
@@ -123,12 +123,12 @@ function exchange_code_for_bearer_token($code, array $options) {
 }
 
 /**
-* Uses the specified bearer token to retrieve the /me response for the user
-* @param   string $bearer_token   The string value of a user's OAuth 2.0 access token
-* @param   array  $options        Options used for Clever API requests
-* @throws  Exception if the /me API response cannot be retrieved
-* @return  array $oauth_response  Hash of Clever's response when identifying a bearer token's owner
-*/
+ * Uses the specified bearer token to retrieve the /me response for the user
+ * @param   string $bearer_token   The string value of a user's OAuth 2.0 access token
+ * @param   array  $options        Options used for Clever API requests
+ * @throws  Exception if the /me API response cannot be retrieved
+ * @return  array $oauth_response  Hash of Clever's response when identifying a bearer token's owner
+ */
 function retrieve_me_response_for_bearer_token($bearer_token, array $options) {
   $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
   $response = request_from_clever($options['clever_api_me_url'], $request_options, $options);
@@ -143,13 +143,13 @@ function retrieve_me_response_for_bearer_token($bearer_token, array $options) {
 }
 
 /**
-* General-purpose HTTP wrapper for working with the Clever API
-* @param   string $url                 The fully-qualified URL that the request will be issued to
-* @param   array  $request_options      Hash of options pertinent to the specific request
-* @param   array  $clever_options       Hash of options more generally associated with Clever API requests
-* @throws  Exception when the HTTP library, cURL, cannot issue the request
-* @return  array  $normalized_response  A structured hash with pertinent response & request details
-*/
+ * General-purpose HTTP wrapper for working with the Clever API
+ * @param   string $url                 The fully-qualified URL that the request will be issued to
+ * @param   array  $request_options      Hash of options pertinent to the specific request
+ * @param   array  $clever_options       Hash of options more generally associated with Clever API requests
+ * @throws  Exception when the HTTP library, cURL, cannot issue the request
+ * @return  array  $normalized_response  A structured hash with pertinent response & request details
+ */
 function request_from_clever($url, array $request_options, array $clever_options) {
   $ch = curl_init($url);
   $request_headers = array('Accept: application/json');
@@ -187,10 +187,10 @@ function request_from_clever($url, array $request_options, array $clever_options
 }
 
 /**
-* Generates a "Sign in with Clever" instant login URL based on the application's current district context
-* @param   array  $options  Options used for Clever API requests
-* @return  string $url      A URL representing the destination for a Sign in with Clever button
-*/
+ * Generates a "Sign in with Clever" instant login URL based on the application's current district context
+ * @param   array  $options  Options used for Clever API requests
+ * @return  string $url      A URL representing the destination for a Sign in with Clever button
+ */
 function generate_sign_in_with_clever_url(array $options) {
   $request_params = array(
     'response_type' => 'code',
@@ -205,9 +205,9 @@ function generate_sign_in_with_clever_url(array $options) {
 }
 
 /**
-* Generates a HTML "Sign in with Clever" instant login link
-* @param   array  $options  Options used for Clever API requests
-* @return  string $html     A HTML anchor tag linking to the destination for a Sign in with Clever button
+ * Generates a HTML "Sign in with Clever" instant login link
+ * @param   array  $options  Options used for Clever API requests
+ * @return  string $html     A HTML anchor tag linking to the destination for a Sign in with Clever button
 */
 function generate_sign_in_with_clever_link(array $options) {
   $html = "<a href='" . generate_sign_in_with_clever_url($options) . "'><img src='http://assets.clever.com/sign-in-with-clever/sign-in-with-clever-small.png'/></a>";
