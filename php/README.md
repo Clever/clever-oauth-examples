@@ -10,7 +10,9 @@ The sample code relies on some environment variables to easily set state. Produc
 
 Use `bin/start_sample_server.sh` to easily start serving on localhost:2587.
 
-`CLEVER_CLIENT_ID=abc CLEVER_CLIENT_SECRET=xyz DISTRICT_ID=hjkl ./bin/start_sample_server.sh`
+`CLEVER_CLIENT_ID=abc CLEVER_CLIENT_SECRET=xyz CLEVER_DISTRICT_ID=hjkl CLEVER_PORT=2587 ./bin/start_sample_server.sh`
+
+A CLEVER_DISTRICT_ID is not required to handle incoming OAuth 2.0 redirects, but must be provided to generate Sign in with Clever links.
 
 ### Tests
 To run this example's tests, you will need to install the phpunit and http-mock.

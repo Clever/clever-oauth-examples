@@ -14,19 +14,20 @@ if($_SERVER && array_key_exists('REQUEST_URI', $_SERVER)) {
 * Prepares options common to interacting with Clever's authentication & API
 *
 * @param   array $override_options  Options to oveverride from defaults
+* @throws  Exception if configuration options are not adequately met
 * @return  array $results           Options for use in Clever API requests
 */
 function set_options(array $override_options = NULL) {
   $options = array(
     # Obtain your Client ID and secret from your Clever developer dashboard at https://account.clever.com/partner/applications
-    'client_id' => $_ENV["CLEVER_CLIENT_ID"],
-    'client_secret' => $_ENV["CLEVER_CLIENT_SECRET"],
-    'port' => $_ENV=["PORT"] || 2587,
-    'district_id' => $_ENV['DISTRICT_ID'],
+    'client_id' => getenv('CLEVER_CLIENT_ID'),
+    'client_secret' => getenv('CLEVER_CLIENT_SECRET'),
+    'port' => getenv('CLEVER_PORT'),
+    'district_id' => getenv('CLEVER_DISTRICT_ID'),
     'clever_oauth_base' => 'https://clever.com/oauth',
     'clever_api_base' => 'https://api.clever.com',
   );
-  if (is_set($override_options)) {
+  if (isset($override_options)) {
     array_merge($options, $override_options);
   }
 
@@ -36,8 +37,12 @@ function set_options(array $override_options = NULL) {
 
   // Clever redirect URIs must be preregistered on your developer dashboard.
   // If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
-  $options['client_redirect_url'] = "http://localhost" . $options['port'] . "/oauth";
-  return $options;
+  $options['client_redirect_url'] = "http://localhost:{$options['port']}/oauth";
+  if (!empty($options['client_id']) && !empty($options['client_secret']) && !empty($options['port'])) {
+    return $options;
+  } else {
+    throw new Exception("Cannot communicate with Clever without configuration.");
+  }
 }
 
 /**
@@ -47,27 +52,33 @@ function set_options(array $override_options = NULL) {
 * @param   array  $options               Options used for Clever API requests
 */
 function process_incoming_requests($incoming_request_uri, array $options) {
-  switch ($incoming_request_uri) {
-    case preg_match('/oauth/', $a):
-      try {
-        $me = process_client_redirect($_GET['code'], $options);
-        echo("<p>Here's some information about the user:</p>");
-        echo("<pre>");
-        print_r($me);
-        echo("</pre>");
-        break;
-      } catch (Exception $e) {
-        echo("<p>Something exceptional happened while interacting with Clever.");
-        echo("<pre>");
-        print_r($e);
-        echo("</pre>");
+  if(preg_match('/oauth/', $incoming_request_uri)) {
+    try {
+      $me = process_client_redirect($_GET['code'], $options);
+      echo("<p>Here's some information about the user:</p>");
+      echo("<ul>");
+      $fields = array('type' => 'User type', 'id' => 'User ID', 'district' => 'District ID');
+      foreach($fields as $key => $label) {
+        echo("<li>{$label}: {$me['data'][$key]}");
       }
-    default:
-      // Our home page route will create a Clever Instant Login button for users from the district our $district_id is set to.
+      echo("</ul>");
+    } catch (Exception $e) {
+      echo("<p>Something exceptional happened while interacting with Clever.");
+      echo("<pre>");
+      print_r($e);
+      echo("</pre>");
+    }
+  } else {
+    if(!empty($options['district_id'])) {
+      // Our home page route will create a Clever Instant Login button for users from the district our $options['district_id'] is set to.
       $sign_in_link = generate_sign_in_with_clever_link($options);
-      echo("<h1>Login!</h1>");
+      echo("<h1>clever_oauth_examples: Login!</h1>");
       echo('<p>' . $sign_in_link . '</p>');
-      break;
+    } else {
+      echo("<h1>clever_oauth_examples</h1>");
+      echo('<p>Configure a Clever District ID to create a Sign in with Clever button on this page.</p>');
+    }
+    echo("<p>Ready to handle OAuth 2.0 client redirects on {$options['client_redirect_url']}.</p>");
   }
 }
 
@@ -102,7 +113,7 @@ function exchange_code_for_bearer_token($code, array $options) {
   $request_options = array('method' => 'POST', 'data' => $data);
   $response = request_from_clever($options['clever_oauth_tokens_url'], $request_options, $options);
   // Evaluate if the response is successful
-  if ($response && $response['response_code'] && $response['response_code'] == 200) {
+  if ($response && $response['response_code'] && $response['response_code'] == '200') {
     $bearer_token = $response['response']['access_token'];
     return $bearer_token;
   } else {
@@ -119,15 +130,15 @@ function exchange_code_for_bearer_token($code, array $options) {
 * @return  array $oauth_response  Hash of Clever's response when identifying a bearer token's owner
 */
 function retrieve_me_response_for_bearer_token($bearer_token, array $options) {
-  $request_options = array('method' => 'GET', 'data' => array('bearer_token' => $bearer_token));
+  $request_options = array('method' => 'GET', 'bearer_token' => $bearer_token);
   $response = request_from_clever($options['clever_api_me_url'], $request_options, $options);
   // Evaluate if the response is successful
-  if ($response && $response['response_code'] && $response['response_code'] == 200) {
+  if ($response && $response['response_code'] && $response['response_code'] == '200') {
     $oauth_response = $response['response'];
     return $oauth_response;
   } else {
     // Handle condition when /me response cannot be retrieved for bearer token
-    throw new Exeception("Could not retrieve /me response for bearer token.");
+    throw new Exception("Could not retrieve /me response for bearer token.");
   }
 }
 

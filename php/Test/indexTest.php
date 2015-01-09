@@ -20,6 +20,17 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
     $this->tearDownHttpMock();
   }
 
+  public function testSetOptionsRequiresCriticalConfiguration() {
+    try {
+      putenv("CLEVER_CLIENT_ID");
+      putenv("CLEVER_CLIENT_SECRET");
+      $options = set_options();
+      $this->fail("Expected exception not thrown");
+    } catch(Exception $e) {
+      $this->assertRegExp("@Cannot communicate with Clever without configuration@", $e->getMessage());
+    }
+  }
+
   public function testProcessClientRedirect() {
     $mock_request_options = prepare_options_for_clever();
     $token_hash_response = array('access_token' => 'abcd');
