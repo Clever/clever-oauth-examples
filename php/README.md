@@ -6,7 +6,7 @@ This sample code demonstrates how to perform token exchange with Clever's Instan
 This example was built using procedural PHP. The sample code itself relies on no external PHP dependencies. It has been fully tested with PHP 5.5.
 
 ### Running the sample code
-The sample code relies on some environment variables to easily set state. Productionized applications should use more robust configuration schemes.
+The sample code relies on some environment variables to easily set state. Use more robust configuration schemes for production applications.
 
 Use `bin/start_sample_server.sh` to easily start serving on localhost:2587.
 
