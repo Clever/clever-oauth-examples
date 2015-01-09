@@ -28,6 +28,8 @@ A `CLEVER_DISTRICT_ID` is not required to handle incoming OAuth 2.0 redirects, b
 
 Set `CLEVER_REDIRECT_BASE` to use an alternate host and port combination for your server.
 
+Remember to register your redirect URI on your Clever developer dashboard. If `CLEVER_REDIRECT_BASE` is set to `http://localhost:2587`, the redirect URI to register would be `http://localhost:2587/oauth`.
+
 ### Tests
 To run this example's tests, you will need to install the [phpunit](https://phpunit.de/) and [http-mock](https://github.com/InterNations/http-mock).
 
