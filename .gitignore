@@ -1,3 +1,4 @@
 python/ssl.key
 python/ssl.csr
 python/ssl.crt
+php/vendor
