@@ -25,10 +25,6 @@ REDIRECT_URI = 'http://localhost:{port}/oauth'.format(port=PORT)
 CLEVER_OAUTH_URL = 'https://clever.com/oauth/tokens'
 CLEVER_API_BASE = 'https://api.clever.com'
 
-# A District ID is required to generate Clever Instant Login URLs.
-# One method to obtain a District ID associated with your application is from https://account.clever.com/partner
-DISTRICT_ID = os.environ['DISTRICT_ID']
-
 # Use the bottle session middleware to store an object to represent a "logged in" state.
 session_opts = {
     'session.type': 'memory',
@@ -37,15 +33,14 @@ session_opts = {
 }
 myapp = SessionMiddleware(app(), session_opts)
 
-# Our home page route will create a Clever Instant Login button for users from the district our DISTRICT_ID is set to.
+# Our home page route will create a Clever Instant Login button.
 @route('/')
 def index():
     encoded_string = urllib.urlencode({
         'response_type': 'code',
         'redirect_uri': REDIRECT_URI,
         'client_id': CLIENT_ID,
-        'scope': 'read:user_id read:sis',
-        'district_id': DISTRICT_ID
+        'scope': 'read:user_id read:sis'        
     })
     return template("<h1>Login!<br/><br/> \
         <a href='https://clever.com/oauth/authorize?" + encoded_string +
@@ -69,7 +64,7 @@ def oauth():
     headers = {
     	'Authorization': 'Basic {base64string}'.format(base64string =
             base64.b64encode(CLIENT_ID + ':' + CLIENT_SECRET)),
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
     }
 
     # Don't forget to handle 4xx and 5xx errors!
@@ -91,11 +86,12 @@ def oauth():
         if 'name' in data: #SIS scope
             nameObject = data['name']            
         else:
+            
             #For student scopes, we'll have to take an extra step to get name data.
             studentId = data['id']
             student = requests.get(CLEVER_API_BASE + '/v1.1/students/{studentId}'.format(studentId=studentId), 
                 headers=bearer_headers).json()
-
+            
             nameObject = student['data']['name']
         
         session = request.environ.get('beaker.session')
