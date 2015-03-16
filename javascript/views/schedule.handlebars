@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bell Schedule</title>
+    
+    <style type="text/css">
+    
+    body {
+        width: 100%;
+        height: 100%;
+        font-family: Helvetica, Arial, Sans-Serif;
+    }
+    #main {
+        position:absolute; 
+        height:100%; width:100%;
+        display: table;
+    }
+
+    #schedule {
+        display: table-cell;
+        vertical-align: middle;
+        text-align:center;
+        font-size: 36pt;
+    }
+    
+    #logout {
+        position: relative;
+        margin-right: 10px;
+        text-align: right;
+    }
+
+    </style>    
+</head>
+<body>
+    <div id="logout"><a href='/logout'>Logout</a></div>
+    <div id="main">        
+        <div id="schedule">        
+        Schedule for {{name.last}}, {{name.first}} <br/><br/>
+        <table border='1' align='center'>
+            <tbody>
+                <tr>
+                    <th>Class Name</th>
+                    <th>Period</th>
+                </tr>
+                {{#each data}}                
+                    <tr>
+                       <td>{{data.name}}</td>
+                       <td>{{data.period}}</td>
+                    </tr>                    
+                {{/each}}
+            </tbody>            
+        </table>
+        </div>    
+    </div>
+    
+</body>
+</html>
+
