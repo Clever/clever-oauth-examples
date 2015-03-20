@@ -99,12 +99,10 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
     $our_options = prepare_options_for_clever();
     $wanted_redirect_url = preg_quote(urlencode($our_options['client_redirect_url']));
     $wanted_client_id = preg_quote($our_options['client_id']);
-    $wanted_district_id = preg_quote($our_options['district_id']);
     $wanted_authorize_url = $our_options['clever_oauth_authorize_url'];
     $url = generate_sign_in_with_clever_url($our_options);
     $this->assertStringStartsWith($wanted_authorize_url, $url);
     $this->assertRegExp("@redirect_uri=$wanted_redirect_url@", $url);
-    $this->assertRegExp(("@district_id=$wanted_district_id@"), $url);
     $this->assertRegExp(("@client_id=$wanted_client_id@"), $url);
   }
 
@@ -126,7 +124,6 @@ function prepare_options_for_clever() {
   $options = array(
     'client_id' => 'abc',
     'client_secret' => 'def',
-    'district_id' => '123',
     'client_redirect_url' => 'http://localhost:1234/oauth',
     'clever_redirect_base' => 'http://localhost:1234',
     'clever_oauth_tokens_url' => 'http://localhost:1234/oauth/tokens',
