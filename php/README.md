@@ -7,7 +7,7 @@ This example was built using procedural PHP. The sample code itself relies on no
 
 When run in a server context, `process_incoming_requests` will listen for incoming HTTP requests on the specified host and port after evaluating pertinent configuration options.
 
-Requests to "/" or any paths besides "/oauth" will be served a simple HTML page. If you've configured a Clever district ID, a "Sign in with Clever" link will be displayed. When that link is followed and authentication is completed on clever.com, the user will be redirected to this script's OAuth 2.0 redirect flow.
+Requests to "/" or any paths besides "/oauth" will be served a simple HTML page with a "Log in with Clever" button. When that link is followed and authentication is completed on clever.com, the user will be redirected to this script's OAuth 2.0 redirect flow.
 
 Requests to "/oauth" will be treated as OAuth 2.0 client redirects and passed to our `process_client_redirect` function to perform a few brief steps:
 
@@ -22,9 +22,7 @@ The sample code relies on some environment variables to easily set state. Use mo
 
 Use `bin/start_sample_server.sh` to easily start serving on `http://localhost:2587`.
 
-`CLEVER_CLIENT_ID=abc CLEVER_CLIENT_SECRET=xyz CLEVER_DISTRICT_ID=hjkl CLEVER_REDIRECT_BASE=http://localhost:2587 ./bin/start_sample_server.sh`
-
-A `CLEVER_DISTRICT_ID` is not required to handle incoming OAuth 2.0 redirects, but must be provided to generate Sign in with Clever links.
+`CLEVER_CLIENT_ID=abc CLEVER_CLIENT_SECRET=xyz CLEVER_REDIRECT_BASE=http://localhost:2587 ./bin/start_sample_server.sh`
 
 Set `CLEVER_REDIRECT_BASE` to use an alternate host and port combination for your server.
 
