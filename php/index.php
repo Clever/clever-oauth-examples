@@ -24,7 +24,6 @@ function set_options(array $override_options = NULL) {
     'client_id' => getenv('CLEVER_CLIENT_ID'),
     'client_secret' => getenv('CLEVER_CLIENT_SECRET'),
     'clever_redirect_base' => getenv('CLEVER_REDIRECT_BASE'),
-    'district_id' => getenv('CLEVER_DISTRICT_ID'),
     'clever_oauth_base' => 'https://clever.com/oauth',
     'clever_api_base' => 'https://api.clever.com',
   );
@@ -70,15 +69,10 @@ function process_incoming_requests($incoming_request_uri, array $options) {
       echo("</pre>");
     }
   } else {
-    if(!empty($options['district_id'])) {
-      // Our home page route will create a Clever Instant Login button for users from the district our $options['district_id'] is set to.
-      $sign_in_link = generate_sign_in_with_clever_link($options);
-      echo("<h1>clever_oauth_examples: Login!</h1>");
-      echo('<p>' . $sign_in_link . '</p>');
-    } else {
-      echo("<h1>clever_oauth_examples</h1>");
-      echo('<p>Configure a Clever District ID to create a Sign in with Clever button on this page.</p>');
-    }
+    // Our home page route will create a Clever Instant Login button for users
+    $sign_in_link = generate_sign_in_with_clever_link($options);
+    echo("<h1>clever_oauth_examples: Login!</h1>");
+    echo('<p>' . $sign_in_link . '</p>');
     echo("<p>Ready to handle OAuth 2.0 client redirects on {$options['client_redirect_url']}.</p>");
   }
 }
@@ -197,8 +191,7 @@ function generate_sign_in_with_clever_url(array $options) {
     'response_type' => 'code',
     'redirect_uri' => $options['client_redirect_url'],
     'client_id' => $options['client_id'],
-    'scope' => 'read:user_id read:sis',
-    'district_id' => $options['district_id']
+    'scope' => 'read:user_id read:teachers read:students'
   );
   $querystring = http_build_query($request_params);
   $url = $options['clever_oauth_authorize_url'] . '?' . $querystring;
