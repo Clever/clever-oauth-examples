@@ -16,5 +16,5 @@ Once a user logs in by selecting their school via Clever Instant Login, the app'
 
 1. Click the Login With Clever Button
 2. Paste district ID 544982fbc7da940010000036 into the District picker to select a demo district.
-3. Use username 'aaronm38' and password 'dah633Veuj' to log in.
+3. Use username 'aaronm38' and password 'dah6eeVeuj' to log in.
 
