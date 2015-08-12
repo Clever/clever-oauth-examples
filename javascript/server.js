@@ -21,6 +21,7 @@ var CLIENT_SECRET = process.env.CLIENT_SECRET;
 var API_PREFIX = 'https://api.clever.com'
 var OAUTH_TOKEN_URL = 'https://clever.com/oauth/tokens'
 
+// A mapping of district IDs to district tokens
 var DISTRICT_DATA = {};
 //
 
@@ -149,7 +150,8 @@ app.get('/app', function(req, res){
             'url': API_PREFIX + '/v1.1/' + userType + '/' + req.session.user.id + '/sections',
             'json': true,            
             'headers' : {
-                'Authorization': 'Bearer ' + DISTRICT_DATA[req.session.user.district]
+                //Use a district token to pull roster information (instead of a user token)
+                'Authorization': 'Bearer ' + DISTRICT_DATA[req.session.user.district] 
             }
         }
         
