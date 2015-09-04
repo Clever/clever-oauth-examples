@@ -19,8 +19,7 @@
     #schedule {
         display: table-cell;
         vertical-align: middle;
-        text-align:center;
-        font-size: 36pt;
+        font-size: 24pt;
     }
     
     #logout {
@@ -30,13 +29,21 @@
     }
 
     </style>    
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 </head>
 <body>
     <div id="logout"><a href='/logout'>Logout</a></div>
-    <div id="main">        
-        <div id="schedule">        
-        Schedule for {{name.last}}, {{name.first}} <br/><br/>
-        <table border='1' align='center'>
+    <div id="main" class="panel panel-default">
+
+
+        <div id='schedule' class="panel panel-default">
+          <!-- Default panel contents -->
+          <div class="panel-heading">Schedule for {{name.last}}, {{name.first}}</div>
+          
+
+          <!-- Table -->
+          <table class="table">
             <tbody>
                 <tr>
                     <th>Class Name</th>
@@ -48,9 +55,10 @@
                        <td>{{data.period}}</td>
                     </tr>                    
                 {{/each}}
-            </tbody>            
-        </table>
-        </div>    
+            </tbody>  
+          </table>
+        </div>
+          
     </div>
     
 </body>
