@@ -17,7 +17,7 @@ CLIENT_SECRET = os.environ['CLIENT_SECRET']
 if 'PORT' in os.environ:
     PORT = os.environ['PORT']
 else:
-    PORT = 2587
+    PORT = 8080
 
 # Clever redirect URIs must be preregistered on your developer dashboard.
 # If using the default PORT set above, make sure to register "http://localhost:2587/oauth"
