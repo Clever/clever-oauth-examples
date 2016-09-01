@@ -7,6 +7,7 @@ var expressHbs = require('express-handlebars');
 
 var session = require('express-session')
 var request = require('request');
+var crypto = require('crypto');
 //
 
 /**
@@ -94,6 +95,14 @@ app.get('/', function(req, res){
 app.get('/oauth', function(req, res){        
     if(!req.query.code){
         res.redirect('/');
+    } else if(!req.query.state){
+        req.session.state = crypto.randomBytes(32).toString("hex");
+        var url = "https://clever.com/oauth/authorize?response_type=code&redirect_uri=" + encodeURIComponent(APP_URL + '/oauth') + "&client_id=" + CLIENT_ID + "&state=" + req.session.state;
+        res.redirect(url);
+    } else if(req.session.state != req.query.state){
+        var err = "Bad state"
+        console.error('Something broke: ' + err);
+        res.status(500).send(err);
     }else{
         var body = {
             'code': req.query.code,
