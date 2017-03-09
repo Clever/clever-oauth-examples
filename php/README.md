@@ -22,11 +22,11 @@ The sample code relies on some environment variables to easily set state. Use mo
 
 Use `bin/start_sample_server.sh` to easily start serving on `http://localhost:2587`.
 
-`CLEVER_CLIENT_ID=abc CLEVER_CLIENT_SECRET=xyz CLEVER_REDIRECT_BASE=http://localhost:2587 ./bin/start_sample_server.sh`
+`CLEVER_CLIENT_ID=abc CLEVER_CLIENT_SECRET=xyz CLEVER_REDIRECT_BASE=localhost:2587 ./bin/start_sample_server.sh`
 
 Set `CLEVER_REDIRECT_BASE` to use an alternate host and port combination for your server.
 
-Remember to register your redirect URI on your Clever developer dashboard. If `CLEVER_REDIRECT_BASE` is set to `http://localhost:2587`, the redirect URI to register would be `http://localhost:2587/oauth`.
+Remember to register your redirect URI on your Clever developer dashboard. If `CLEVER_REDIRECT_BASE` is set to `localhost:2587`, the redirect URI to register would be `http://localhost:2587/oauth`.
 
 ### Tests
 To run this example's tests, you will need to install the [phpunit](https://phpunit.de/) and [http-mock](https://github.com/InterNations/http-mock).
