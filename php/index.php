@@ -158,7 +158,9 @@ function request_from_clever($url, array $request_options, array $clever_options
   if ($request_options && array_key_exists('method', $request_options) && $request_options['method'] == 'POST') {
     curl_setopt($ch, CURLOPT_POST, 1);
     if ($request_options['data']) {
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $request_options['data']);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($request_options['data']));
+      $content_type_header = 'Content-Type: application/x-www-form-urlencoded';
+      $request_headers[] = $content_type_header;
     }
   }
   // Set prepared HTTP headers
