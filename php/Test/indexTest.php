@@ -58,6 +58,14 @@ class CleverInstantLoginExample extends PHPUnit_Framework_TestCase {
         then()->body($json_string_response)->end();
     $this->http->setUp();
     $bearer_token = exchange_code_for_bearer_token('xyz', $mock_request_options);
+
+    $request = $this->http->requests->latest();
+    $this->assertSame(
+        'application/x-www-form-urlencoded',
+        (string) $request->getHeader('Content-Type'),
+        'Client should send application/x-www-form-urlencoded'
+    );
+
     $this->assertEquals($bearer_token, $expected_bearer_token);
   }
 
