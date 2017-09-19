@@ -1,5 +1,7 @@
 # DEPRECATED - Clever is no longer supporting or maintaining this repository.
 
+These examples are now out of date and do not reflect our best practices.
+
 Clever OAuth Examples
 =====================
 
