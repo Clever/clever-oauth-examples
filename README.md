@@ -1,3 +1,5 @@
+# DEPRECATED - Clever is no longer supporting or maintaining this repository.
+
 Clever OAuth Examples
 =====================
 
