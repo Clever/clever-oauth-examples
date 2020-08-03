@@ -8,6 +8,6 @@
     "express-session": "1.7.6",
     "express-handlebars": "1.0.1",
     "serve-static": "1.5.3",
-    "request": "2.40.0"
+    "request": "2.88.2"
   }
 }
